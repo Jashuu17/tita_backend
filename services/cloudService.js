@@ -1,0 +1,18 @@
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET
+});
+
+async function uploadAudio(filePath) {
+
+  const result = await cloudinary.uploader.upload(filePath, {
+    resource_type: "video"
+  });
+
+  return result.secure_url;
+}
+
+module.exports = uploadAudio;
