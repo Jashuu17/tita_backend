@@ -1,39 +1,56 @@
-require('dotenv').config(); // Must be at top
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const mqtt = require('mqtt');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
 
-const authRoutes = require('./routes/auth');
-const deviceRoutes = require('./routes/device');
-const timetableRoutes = require('./routes/timetable');
-const chatRoutes = require('./routes/chat');
-const ttsRoutes = require('./routes/tts');
+const authRoutes = require("./routes/auth");
+const timetableRoutes = require("./routes/timetable");
+const deviceRoutes = require("./routes/device");
+const ttsRoutes = require("./routes/tts");
+
+const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
+
+// Security middlewares
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(morgan("dev"));
 
-// MQTT setup
-const mqttClient = mqtt.connect(process.env.MQTT_URL);
-mqttClient.on('connect', () => console.log('MQTT connected'));
-app.locals.mqttClient = mqttClient;
+// Rate limit
+const limiter = rateLimit({
+ windowMs: 15 * 60 * 1000,
+ max: 100
+});
+app.use(limiter);
 
-// routes
-app.use('/api/auth', authRoutes);
-app.use('/api/device', deviceRoutes);
-app.use('/api/timetable', timetableRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/tts', ttsRoutes);
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/timetable", timetableRoutes);
+app.use("/api/device", deviceRoutes);
+app.use("/api/tts", ttsRoutes);
 
-// start server
-connectDB().then(() => {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Error handler
+app.use(errorHandler);
+
+// MongoDB
+mongoose.connect(process.env.MONGO_URI)
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log(err));
+
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+  res.json({
+    status: "success",
+    message: "TITA Backend API Running 🚀"
+  });
 });
 
-const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+ console.log(`Server running on port ${PORT}`);
 });
