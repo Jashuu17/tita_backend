@@ -10,6 +10,7 @@ const authRoutes = require("./routes/auth");
 const timetableRoutes = require("./routes/timetable");
 const deviceRoutes = require("./routes/device");
 const ttsRoutes = require("./routes/tts");
+const usersRoutes = require("./routes/users");
 
 const errorHandler = require("./middleware/errorHandler");
 
@@ -33,6 +34,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/device", deviceRoutes);
 app.use("/api/tts", ttsRoutes);
+// add this line with the others:
+app.use("/api/users", usersRoutes);
 
 // Error handler
 app.use(errorHandler);
