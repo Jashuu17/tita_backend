@@ -11,6 +11,7 @@ const timetableRoutes = require("./routes/timetable");
 const deviceRoutes = require("./routes/device");
 const ttsRoutes = require("./routes/tts");
 const usersRoutes = require("./routes/users");
+const chatRoutes = require("./routes/chat");
 
 const errorHandler = require("./middleware/errorHandler");
 
@@ -36,6 +37,7 @@ app.use("/api/device", deviceRoutes);
 app.use("/api/tts", ttsRoutes);
 // add this line with the others:
 app.use("/api/users", usersRoutes);
+app.use("/api/chat", chatRoutes);  // add this with the others
 
 // Error handler
 app.use(errorHandler);
