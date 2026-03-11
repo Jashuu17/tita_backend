@@ -1,2 +1,1 @@
-TTS
-numpy<2.0
+gTTS

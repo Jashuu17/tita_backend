@@ -11,27 +11,28 @@ async function generateTTS(text) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
-    const fileName = `audio_${Date.now()}.wav`;
+    const fileName = `audio_${Date.now()}.mp3`;
     const filePath = path.join(tempDir, fileName);
 
-    // Sanitize: remove quotes/backslashes, limit length
+    // Sanitize text
     const safeText = text.replace(/["\\]/g, '').substring(0, 500);
 
-    // Use python3 (not python) — Render uses python3
     const cmd = `python3 python/generate_tts.py "${safeText}" "${filePath}"`;
     console.log('[TTS] Running:', cmd);
 
-    exec(cmd, { timeout: 90000 }, (err, stdout, stderr) => {
+    exec(cmd, { timeout: 30000 }, (err, stdout, stderr) => {
       if (err) {
         console.error('[TTS] Error:', err.message);
         console.error('[TTS] stderr:', stderr);
         return reject(new Error(`TTS generation failed: ${err.message}\n${stderr}`));
       }
-      if (!fs.existsSync(filePath)) {
-        return reject(new Error(`TTS output file not created at ${filePath}`));
+      // gTTS always outputs mp3
+      const actualPath = filePath.replace('.wav', '.mp3');
+      if (!fs.existsSync(actualPath)) {
+        return reject(new Error(`TTS output file not created at ${actualPath}`));
       }
-      console.log('[TTS] Done:', filePath);
-      resolve(filePath);
+      console.log('[TTS] Done:', actualPath);
+      resolve(actualPath);
     });
   });
 }
