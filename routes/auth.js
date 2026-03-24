@@ -1,6 +1,3 @@
-// routes/auth.js — REPLACE your existing register handler with this
-// Only the POST /register route changes — login stays the same
-
 const express  = require('express');
 const router   = express.Router();
 const bcrypt   = require('bcryptjs');
@@ -11,7 +8,8 @@ const { sendWelcomeEmail } = require('../services/emailService');
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, confirmPassword, role } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    const { password, confirmPassword, role } = req.body;
 
     if (!email || !password || !confirmPassword)
       return res.status(400).json({ success: false, message: 'All fields required' });
@@ -23,30 +21,30 @@ router.post('/register', async (req, res) => {
     if (existing)
       return res.status(400).json({ success: false, message: 'Email already registered' });
 
-    const hashed = await bcrypt.hash(password, 10);
-    const user   = await User.create({
+    // ✅ Don't hash here — model pre('save') hook handles it
+    const user = await User.create({
       email,
-      password: hashed,
-      role:     role || 'User',
+      password: password, // plain password — model will hash it
+      role: role || 'User',
     });
 
-    // Send welcome email with credentials
-    // We send the plain password here because user needs to know it
-    // (only time we ever send it — they should change it after login)
     try {
       await sendWelcomeEmail({
         to:       email,
         name:     email.split('@')[0],
-        password: password,   // plain text — sent once at registration
+        password: password,
       });
     } catch (emailErr) {
-      // Don't fail registration if email fails — just log it
       console.error('[Email] Failed to send welcome email:', emailErr.message);
     }
 
     res.status(201).json({ success: true, message: 'Account created. Check your email.' });
 
   } catch (err) {
+    // ✅ Handle duplicate key error from MongoDB explicitly
+    if (err.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
     console.error('[Auth] Register error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
